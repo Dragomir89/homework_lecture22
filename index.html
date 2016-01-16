@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style type="text/css">
+
+personWrapper{
+	width: 300px;
+	display: inline-block;
+	float: left;
+}
+
+a{	
+	display:block;
+	width: 75px;
+	margin: 5px;
+}
+table{
+	border: 1px solid black;
+}
+
+table td{
+	border: 1px solid black;
+	padding: 5px;
+	width: 150px;
+}
+img{
+	width: 150px;
+
+}
+
+</style>
+
+
+<script type="text/javascript" src="../homework_lecture22/Ajax.js"></script>
+</head>
+<body>
+
+HELLO
+	<div id='container'>
+	
+	
+	</div>
+	
+<script type="text/javascript">
+	var container = document.getElementById('container');
+	var storage = window.sessionStorage;
+	
+	
+	
+	if(storage.myItem){
+		var obj = JSON.parse(storage.myItem);
+			
+		var currentTime = new Date().getTime(); 
+		
+		console.log(obj);
+		
+		var diffInSec = (currentTime - obj.time) / 1000;
+		
+		console.log(diffInSec);
+		
+		var params = {
+			id : obj.id
+		}
+		
+		if(diffInSec < 30){
+			
+			Ajax.makeRequest('GET','server.php',params,true, getOne);	
+		}else{
+			obj.time = 0;
+			
+			console.log(obj.time);
+		}
+		
+		
+		
+		
+	}
+	
+	
+	
+	
+	function getAll(xhr){
+		var persons = JSON.parse(xhr.responseText);
+		
+		
+		persons.forEach(function(e){
+			var personWrapper = document.createElement('div');
+			personWrapper.setAttribute("class", "personWrapper");
+			
+			var personName = document.createElement('a');
+			var img = document.createElement('img');
+			img.setAttribute('src', e.img)
+			
+			personName.setAttribute('href', '#');
+			personName.setAttribute('id', e.id);
+			personName.innerHTML = e.firstName;	
+			
+			personWrapper.appendChild(img);
+			personWrapper.appendChild(personName);
+			container.appendChild(personWrapper);
+			
+			
+		})
+	}
+	
+	
+	
+	function getOne(xhr){
+		
+		var person = JSON.parse(xhr.responseText);
+		var result = '<table>'
+
+		
+			result += '<tr><td>First name</td>'+ 
+					   '<td>'+ person.firstName +'</td>'+
+				    '</tr>'+
+				    '<tr>'+	
+						'<td>Last name</td>'+
+						'<td>'+ person.lastName +'</td>'+
+	  	 			'</tr>'+
+	  	 			'<tr>'+	
+						'<td>birthday</td>'+
+						'<td>'+ person.Bday +'</td>'+
+					'</tr>'+
+					'<tr>'+	
+						'<td>profession</td>'+
+						'<td>'+ person.profession +'</td>'+
+					'</tr>'+
+					'<tr>'+	
+						'<td> gender </td>'+
+						'<td>'+ person.gender +'</td>'+
+					'</tr>';    
+		result += '</table>'
+			container.innerHTML = result;
+		
+		var btn = document.createElement('button');
+		btn.setAttribute('id', 'btn');
+		btn.innerText = 'Back';
+		container.appendChild(btn);
+		
+		var timeNow = new Date().getTime(); 
+		var item = {
+				id: person.id,
+				time: timeNow
+			}
+		
+		item = JSON.stringify(item);
+		
+		storage.myItem = item;
+		
+		
+	};
+	
+	
+	
+	container.addEventListener('click',function(e){
+		
+		var currentID = e.target.getAttribute("id");
+		
+		if(Number(currentID)){
+			
+			params={
+					id : currentID
+			}	
+			
+			
+			Ajax.makeRequest('GET','server.php',params,true, getOne)			
+			return;
+			
+		}else if(currentID == 'btn'){
+			container.innerHTML = '';
+			Ajax.makeRequest('GET','server.php',{},true, getAll)
+		}
+		
+		
+	});
+	
+	
+
+	Ajax.makeRequest('GET','server.php',{},true, getAll)
+
+</script>
+</body>
+</html>
