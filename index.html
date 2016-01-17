@@ -1,186 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-<style type="text/css">
+    <meta charset="UTF-8">
+    <title>Insert title here</title>
 
-personWrapper{
-	width: 300px;
-	display: inline-block;
-	float: left;
-}
+    <style type="text/css">
 
-a{	
-	display:block;
-	width: 75px;
-	margin: 5px;
-}
-table{
-	border: 1px solid black;
-}
+        .name{
+            display: block;
 
-table td{
-	border: 1px solid black;
-	padding: 5px;
-	width: 150px;
-}
-img{
-	width: 150px;
+        }
 
-}
-
-</style>
+    </style>
 
 
-<script type="text/javascript" src="../homework_lecture22/Ajax.js"></script>
+    <script type="text/javascript" src="Ajax.js"></script>
 </head>
 <body>
+<div id= 'container'>
 
-HELLO
-	<div id='container'>
-	
-	
-	</div>
-	
+
+</div>
+
+
 <script type="text/javascript">
-	var container = document.getElementById('container');
-	var storage = window.sessionStorage;
-	
-	
-	
-	if(storage.myItem){
-		var obj = JSON.parse(storage.myItem);
-			
-		var currentTime = new Date().getTime(); 
-		
-		console.log(obj);
-		
-		var diffInSec = (currentTime - obj.time) / 1000;
-		
-		console.log(diffInSec);
-		
-		var params = {
-			id : obj.id
-		}
-		
-		if(diffInSec < 30){
-			
-			Ajax.makeRequest('GET','server.php',params,true, getOne);	
-		}else{
-			obj.time = 0;
-			
-			console.log(obj.time);
-		}
-		
-		
-		
-		
-	}
-	
-	
-	
-	
-	function getAll(xhr){
-		var persons = JSON.parse(xhr.responseText);
-		
-		
-		persons.forEach(function(e){
-			var personWrapper = document.createElement('div');
-			personWrapper.setAttribute("class", "personWrapper");
-			
-			var personName = document.createElement('a');
-			var img = document.createElement('img');
-			img.setAttribute('src', e.img)
-			
-			personName.setAttribute('href', '#');
-			personName.setAttribute('id', e.id);
-			personName.innerHTML = e.firstName;	
-			
-			personWrapper.appendChild(img);
-			personWrapper.appendChild(personName);
-			container.appendChild(personWrapper);
-			
-			
-		})
-	}
-	
-	
-	
-	function getOne(xhr){
-		
-		var person = JSON.parse(xhr.responseText);
-		var result = '<table>'
 
-		
-			result += '<tr><td>First name</td>'+ 
-					   '<td>'+ person.firstName +'</td>'+
-				    '</tr>'+
-				    '<tr>'+	
-						'<td>Last name</td>'+
-						'<td>'+ person.lastName +'</td>'+
-	  	 			'</tr>'+
-	  	 			'<tr>'+	
-						'<td>birthday</td>'+
-						'<td>'+ person.Bday +'</td>'+
-					'</tr>'+
-					'<tr>'+	
-						'<td>profession</td>'+
-						'<td>'+ person.profession +'</td>'+
-					'</tr>'+
-					'<tr>'+	
-						'<td> gender </td>'+
-						'<td>'+ person.gender +'</td>'+
-					'</tr>';    
-		result += '</table>'
-			container.innerHTML = result;
-		
-		var btn = document.createElement('button');
-		btn.setAttribute('id', 'btn');
-		btn.innerText = 'Back';
-		container.appendChild(btn);
-		
-		var timeNow = new Date().getTime(); 
-		var item = {
-				id: person.id,
-				time: timeNow
-			}
-		
-		item = JSON.stringify(item);
-		
-		storage.myItem = item;
-		
-		
-	};
-	
-	
-	
-	container.addEventListener('click',function(e){
-		
-		var currentID = e.target.getAttribute("id");
-		
-		if(Number(currentID)){
-			
-			params={
-					id : currentID
-			}	
-			
-			
-			Ajax.makeRequest('GET','server.php',params,true, getOne)			
-			return;
-			
-		}else if(currentID == 'btn'){
-			container.innerHTML = '';
-			Ajax.makeRequest('GET','server.php',{},true, getAll)
-		}
-		
-		
-	});
-	
-	
 
-	Ajax.makeRequest('GET','server.php',{},true, getAll)
+    openSite();
+
+
+    function addPersonToDOM(person){
+        var wrapper = document.createElement('div');
+
+        var person = JSON.parse(person);
+
+        document.getElementById('container').innerHTML = '';
+
+        var fName = document.createElement('p');
+        fName.innerHTML = 'first name '  +  person.firstName;
+        
+        var lName = document.createElement('p');
+        lName.innerHTML = 'last name '  +  person.lastName;
+
+        var profession = document.createElement('p');
+        profession.innerHTML = 'profession '  +  person.profession;
+
+        var bDay = document.createElement('p');
+        bDay.innerHTML = 'birth day '  +  person.Bday;
+
+        var btn = document.createElement('button');
+        btn.innerHTML = 'Back';
+        btn.id = 'btn';
+
+        wrapper.appendChild(fName);
+        wrapper.appendChild(lName);
+        wrapper.appendChild(profession);
+        wrapper.appendChild(bDay);
+        wrapper.appendChild(btn);
+
+        document.getElementById('container').appendChild(wrapper);
+
+    }
+    
+    function getOne(xml){
+
+        var person = xml.responseText;
+
+        addPersonToDOM(person);
+
+        var timeNow = new Date().getTime();
+
+        var storage = window.sessionStorage;
+
+        var lastRequest = {
+            time : timeNow,
+            person : person
+        };
+
+        lastRequest = JSON.stringify(lastRequest);
+        storage.lastRequest = lastRequest;
+
+    }
+    
+    document.getElementById('container').addEventListener('click',function(event){
+
+        var currentId = event.target.id;
+
+        if(Number(currentId)){
+
+            var params = {
+                id : currentId
+            };
+
+            Ajax.makeRequest('GET','server.php',params,true,getOne);
+
+        }else if(currentId == 'btn'){
+            showAllPersons();
+        }
+
+    });
+
+    function callback(param){
+
+        var persons = JSON.parse(param.responseText)
+        
+        persons.forEach(function(e){
+            var wrapper = document.createElement('div');
+
+
+            var fName = document.createElement('a');
+            fName.innerHTML = e.firstName;
+            fName.href = '#';
+            fName.setAttribute('class', 'name');
+            fName.setAttribute('id', e.id);
+
+            var img = document.createElement('img');
+            img.src = e.img;
+            img.width = 150;
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(fName);
+
+            document.getElementById('container').appendChild(wrapper);
+
+        })
+
+    }
+
+    function showAllPersons(){
+        document.getElementById('container').innerHTML = '';
+
+        Ajax.makeRequest('GET','server.php',{},true,callback);
+
+    }
+
+    function openSite(){
+
+        var timeNow = new Date().getTime();
+
+        var storage = JSON.parse(window.sessionStorage.lastRequest);
+
+        var diffTime = (Number(timeNow) - Number(storage.time)) / 1000;
+
+        console.log(diffTime);
+
+        if(diffTime < 30){
+
+            addPersonToDOM(storage.person);
+        }else{
+            showAllPersons();
+        }
+
+    }
+
+
+
+
 
 </script>
+
+
 </body>
 </html>
